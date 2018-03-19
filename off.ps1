@@ -10,14 +10,34 @@ function DisableUser($Name, [switch]$Seckga){
         #it's seckga
         Write-Host "Выключение пользователя в домене seckga"
         $SamAccountName = (Get-ADUser -Filter {Name -eq $Name} -Server seckga.local -Credential $cred -SearchBase "OU=ГУ НИПЦ (gu_nipc),DC=seckga,DC=local").SamAccountName
-        Disable-ADAccount -Server seckga.local -Credential $cred $SamAccountName
+        
+        if($SamAccountName){
+        
+            Disable-ADAccount -Server seckga.local -Credential $cred $SamAccountName
+        
+        }else{
+        
+            Write-Host "Нет учётной записи в домене seckga" -ForegroundColor Gray
+        
+        }
+        
     
     }else{
         
         #it's genplan
         Write-Host "Выключение пользователя в домене genplan"
         $SamAccountName = (Get-ADUser -Filter {Name -eq $Name} -SearchBase "OU=users and computers,DC=genplan,DC=local").SamAccountName
-        Disable-ADAccount $SamAccountName
+        
+        if($SamAccountName){
+        
+            Disable-ADAccount $SamAccountName
+        
+        }else{
+        
+            Write-Host "Нет учётной записи в домене genplan" -ForegroundColor Gray
+        
+        }
+        
     }
 }
 
@@ -30,8 +50,8 @@ function DeleteMail($Name, [switch]$Seckga){
         #it's seckga
         
         Write-Host "Удаление контакта пользователя в домене seckga"
-        $SamName = (Get-ADUser -Filter {Name -eq $Name} -SearchBase "OU=users and computers,DC=genplan,DC=local").SamAccountName
-        $Samname = $SamName + "*"
+        $SamName = (Get-ADUser -Filter {Name -eq $Name} -Server seckga.local -Credential $cred -SearchBase "OU=ГУ НИПЦ (gu_nipc),DC=seckga,DC=local").SamAccountName
+        $SamName = $SamName + "*"
         $session = New-PSSession -Credential $cred  -ConfigurationName Microsoft.Exchange -ConnectionUri "http://exch.seckga.local/PowerShell" -Authentication Kerberos
         Import-PSSession $session -CommandName Remove-MailContact, Disable-Mailbox, Remove-TransportRule -AllowClobber
         Remove-MailContact $SamName -Confirm:$false
@@ -86,10 +106,12 @@ function SearchUser($Name, [switch]$Seckga){
         $userArray += $obj.Name
     
     }
-
+    
     return ,$userArray
 
 }
+
+
 
 
 
@@ -98,6 +120,8 @@ Write-Host "Введите фамилию сотрудника:" -ForegroundColo
 $name = Read-Host 
 
 if($name){
+    
+    $found = $true
 
     $answer = SearchUser -Name $name
 
@@ -109,9 +133,13 @@ if($name){
     
             Write-Host "Не найдено пользователя" -ForegroundColor Red
 
+            $found = $false
+
         }
 
-    }else{
+    }
+
+    if($found){
 
         Write-Host "Найдены следующие пользователи:" -foreground Gray
 
@@ -158,8 +186,8 @@ if($name){
                 }
 
             }
-
-    }
+        }
+    
 }else{
     
     Write-Host "Не введено имя пользователя" -ForegroundColor Red
