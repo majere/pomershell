@@ -181,7 +181,7 @@ if($name){
             
                 }else{
             
-                    Write-Host "Отмена анигиляции"
+                    Write-Host "Отмена аннигиляции"
                 
                 }
 
